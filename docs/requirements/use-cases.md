@@ -899,7 +899,7 @@ The course admin shall be able to cancel the use case at any time prior to submi
 
 **Preconditions:**
 - PRE-1. The instructor is logged into the system.
-- PRE-2. The instructor is assigned to at least one course section (BR-section-scoped-access).
+- PRE-2. The instructor is assigned to at least one course section, or is the course admin of a course that has one (BR-section-scoped-access).
 
 **Postconditions:**
 - POST-1. Each student the instructor confirmed, whose submission was still outstanding when the reminder was sent and whose address the mail server accepted, has been sent one submission reminder for the selected submission item and week.
@@ -908,16 +908,16 @@ The course admin shall be able to cancel the use case at any time prior to submi
 
 **Main Success Scenario:**
 1. The instructor indicates to remind the students who have not submitted for the previous week.
-2. The system asks the instructor to select one of the course sections she is assigned to, and one submission item: the weekly activity report or the peer evaluation.
+2. The system asks the instructor to select one of the course sections she is assigned to or, as course admin, owns, and one submission item: the weekly activity report or the peer evaluation.
 3. The instructor selects a course section and a submission item and confirms that she has finished.
 4. The system identifies the students of the course section whose selected submission item is outstanding for the previous week (BR-outstanding-submission) and displays them according to the "Recipient list" defined in the Associated Information of this use case, with all of them selected.
 5. The instructor deselects any student she does not want to remind and confirms the reminder.
-6. For each selected student, the system confirms that her submission is still outstanding and sends her a submission reminder according to the "Notification" defined in the Associated Information of this use case.
+6. For each selected student, the system confirms that she is still a student of the course section and that her submission is still outstanding, and sends her a submission reminder according to the "Notification" defined in the Associated Information of this use case.
 7. The system records each reminder sent and informs the instructor how many reminders were sent and which selected students were skipped, with the reason for each.
 8. Use case ends.
 
 **Extensions:**
-- **3a. The course section is not active:**
+- **3a. The course admin has marked the course section inactive:**
   - 3a1. The system informs the instructor that reminders cannot be sent for an inactive course section.
   - 3a2. Use case ends.
 - **3b. The previous week is not one of the course section's active weeks:**
@@ -941,9 +941,12 @@ The course admin shall be able to cancel the use case at any time prior to submi
 - **6b. A selected student was sent a reminder for this submission item and week today by another instructor between steps 4 and 6:**
   - 6b1. The system does not send her a reminder and reports her at step 7 as skipped because she was already reminded today (BR-reminder-limit).
   - 6b2. The system continues with the next selected student.
-- **6c. The mail server rejects a selected student's address:**
-  - 6c1. The system does not record a reminder for her, and reports her at step 7 as not reminded because her address was rejected, so that the instructor can correct it.
+- **6c. The system cannot hand a selected student's reminder to the mail server** (the server rejects her address, or the server cannot be reached):
+  - 6c1. The system does not record a reminder for her, and reports her at step 7 as not reminded, with the reason the mail server gave.
   - 6c2. The system continues with the next selected student.
+- **6d. The previous week changed between steps 4 and 6** (the instructor confirmed after midnight on a Sunday):
+  - 6d1. The system sends no reminder and informs the instructor that the week has changed.
+  - 6d2. The use case returns to step 4 for the new previous week.
 
 **Priority:** Medium
 **Frequency of Use:** Approximately 2 instructors, 1 to 2 usages per week per course section.
@@ -953,6 +956,8 @@ The course admin shall be able to cancel the use case at any time prior to submi
 - Previous week: The calendar week, Monday to Sunday, before the week in which the instructor runs this use case. The weekly activity report and the peer evaluation a student is reminded about are both the ones for the previous week. The instructor cannot select an earlier week: a peer evaluation for an earlier week can no longer be submitted (BR-evaluation-submission-window), so a reminder for it could not be acted on.
 - Recipient list: For each student with an outstanding submission, the system displays her name, her team, and the time she was last sent an instructor's submission reminder for this submission item and week, if any. For a peer evaluation, it also displays how many of her team's members she has evaluated out of how many she must evaluate (e.g., "2 of 4"). The system also displays the due day and time the course section has configured for the submission item.
 - Notification: The system emails each selected student her own reminder through the Gmail SMTP integration (CI-email-notifications). A reminder is addressed to that student only and names no other student, so no student learns another's submission status (CO-ferpa). It names the course section, the submission item, the week it covers, and the due day and time the course section has configured for that submission item.
+- Sent: A reminder counts as sent once the mail server accepts it. A message the mail server accepts and later bounces cannot be detected by the system and counts as sent.
+- Reminder records: A reminder record is part of the student's records; deleting the student deletes her reminder records with her other submitted work (BR-student-lifecycle).
 - The instructor shall be able to cancel the use case at any time before confirming the reminder in step 5.
 
 **Related Use Cases:** UC-WAR-manage-activities: Manage activities in a weekly activity report; UC-EVA-submit-evaluation: Submit a peer evaluation for the previous week; UC-EVA-section-evaluation-report: Generate a peer evaluation report of the entire course section
