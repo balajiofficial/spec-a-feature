@@ -887,6 +887,79 @@ The course admin shall be able to cancel the use case at any time prior to submi
 **Assumptions:**
 **Open Issues:**
 
+### **UC-SEC-remind-non-submitters: The instructor reminds the students who have not submitted for the previous week**
+
+**UC ID and Name:** UC-SEC-remind-non-submitters: Remind the students who have not submitted for the previous week
+**Created By:** Balaji Kannan
+**Date Created:** 2026-10-02
+**Primary Actor:** instructor
+**Secondary Actors:** student
+**Trigger:** The instructor indicates to remind the students of a course section who have not submitted for the previous week.
+**Description:** The instructor wants to email a submission reminder to only those students of her course section whose weekly activity report or peer evaluation for the previous week is outstanding, so that they submit it without the students who already did being reminded.
+
+**Preconditions:**
+- PRE-1. The instructor is logged into the system.
+- PRE-2. The instructor is assigned to at least one course section (BR-section-scoped-access).
+
+**Postconditions:**
+- POST-1. Each student the instructor confirmed, whose submission was still outstanding when the reminder was sent and whose address the mail server accepted, has been sent one submission reminder for the selected submission item and week.
+- POST-2. The system has recorded each reminder sent: the student, the submission item, the week, the instructor, and the time sent.
+- POST-3. No student whose submission was not outstanding has been sent a reminder.
+
+**Main Success Scenario:**
+1. The instructor indicates to remind the students who have not submitted for the previous week.
+2. The system asks the instructor to select one of the course sections she is assigned to, and one submission item: the weekly activity report or the peer evaluation.
+3. The instructor selects a course section and a submission item and confirms that she has finished.
+4. The system identifies the students of the course section whose selected submission item is outstanding for the previous week (BR-outstanding-submission) and displays them according to the "Recipient list" defined in the Associated Information of this use case, with all of them selected.
+5. The instructor deselects any student she does not want to remind and confirms the reminder.
+6. For each selected student, the system confirms that her submission is still outstanding and sends her a submission reminder according to the "Notification" defined in the Associated Information of this use case.
+7. The system records each reminder sent and informs the instructor how many reminders were sent and which selected students were skipped, with the reason for each.
+8. Use case ends.
+
+**Extensions:**
+- **3a. The course section is not active:**
+  - 3a1. The system informs the instructor that reminders cannot be sent for an inactive course section.
+  - 3a2. Use case ends.
+- **3b. The previous week is not one of the course section's active weeks:**
+  - 3b1. The system informs the instructor that no student is expected to submit the selected submission item for that week (BR-active-weeks, BR-outstanding-submission), so there is no one to remind.
+  - 3b2. Use case ends.
+- **4a. No student has an outstanding submission:**
+  - 4a1. The system informs the instructor that every student expected to submit the selected submission item for the previous week has submitted it.
+  - 4a2. Use case ends.
+- **4b. One or more students of the course section are not assigned to a team:**
+  - 4b1. The system does not include them in the recipient list, because they cannot submit (BR-team-assignment-required), and lists them separately as not assigned to a team so that the instructor can follow up with the course admin.
+  - 4b2. The use case continues at step 5.
+- **4c. One or more listed students were already sent an instructor's submission reminder for this submission item and week today:**
+  - 4c1. The system displays them in the recipient list with the time of that reminder, does not select them, and does not let the instructor select them (BR-reminder-limit).
+  - 4c2. If no listed student can be selected, the system informs the instructor that every outstanding student has already been reminded today and the use case ends; otherwise the use case continues at step 5.
+- **5a. The instructor deselects every student, or cancels:**
+  - 5a1. The system sends no reminder.
+  - 5a2. Use case ends.
+- **6a. A selected student's submission is no longer outstanding** (she submitted between steps 4 and 6, or her account was deactivated):
+  - 6a1. The system does not send her a reminder and reports her at step 7 as skipped because she no longer has an outstanding submission.
+  - 6a2. The system continues with the next selected student.
+- **6b. A selected student was sent a reminder for this submission item and week today by another instructor between steps 4 and 6:**
+  - 6b1. The system does not send her a reminder and reports her at step 7 as skipped because she was already reminded today (BR-reminder-limit).
+  - 6b2. The system continues with the next selected student.
+- **6c. The mail server rejects a selected student's address:**
+  - 6c1. The system does not record a reminder for her, and reports her at step 7 as not reminded because her address was rejected, so that the instructor can correct it.
+  - 6c2. The system continues with the next selected student.
+
+**Priority:** Medium
+**Frequency of Use:** Approximately 2 instructors, 1 to 2 usages per week per course section.
+**Business Rules:** BR-section-scoped-access, BR-role-based-access (only an instructor assigned to the course section, or its course admin, sees its outstanding submissions and reminds its students); BR-outstanding-submission (who has not submitted); BR-reminder-limit (how often a student may be reminded); BR-team-assignment-required, BR-student-lifecycle, BR-active-weeks (who is expected to submit); BR-evaluation-submission-window (why only the previous week is offered)
+
+**Associated Information:**
+- Previous week: The calendar week, Monday to Sunday, before the week in which the instructor runs this use case. The weekly activity report and the peer evaluation a student is reminded about are both the ones for the previous week. The instructor cannot select an earlier week: a peer evaluation for an earlier week can no longer be submitted (BR-evaluation-submission-window), so a reminder for it could not be acted on.
+- Recipient list: For each student with an outstanding submission, the system displays her name, her team, and the time she was last sent an instructor's submission reminder for this submission item and week, if any. For a peer evaluation, it also displays how many of her team's members she has evaluated out of how many she must evaluate (e.g., "2 of 4"). The system also displays the due day and time the course section has configured for the submission item.
+- Notification: The system emails each selected student her own reminder through the Gmail SMTP integration (CI-email-notifications). A reminder is addressed to that student only and names no other student, so no student learns another's submission status (CO-ferpa). It names the course section, the submission item, the week it covers, and the due day and time the course section has configured for that submission item.
+- The instructor shall be able to cancel the use case at any time before confirming the reminder in step 5.
+
+**Related Use Cases:** UC-WAR-manage-activities: Manage activities in a weekly activity report; UC-EVA-submit-evaluation: Submit a peer evaluation for the previous week; UC-EVA-section-evaluation-report: Generate a peer evaluation report of the entire course section
+**Assumptions:**
+**Open Issues:**
+- The scheduled weekly reminder (FR-NOT-weekly-reminder) still emails every student of the course section; making it skip students without an outstanding submission (BR-outstanding-submission) is a separate change to that requirement.
+
 ## **Team**
 
 ### **UC-TEA-find-teams: The course admin/instructor finds teams**
